@@ -161,6 +161,7 @@ def get_conversation(user_id : str):
     return conversation
 
 
+
 def make_description(conv):
     description = []
     for m in conv['messages']:
@@ -169,14 +170,17 @@ def make_description(conv):
     return " ".join(description)[:15]
 
 def process_blog(user_id : str):
+    task_id = uuid.uuid4()
+
     conv = get_conversation(user_id)
     conv['description'] = make_description(conv)
     conv['status'] = 'Submitted'
+    conv['task_id'] = task_id
     save_conversation(user_id, conv)
 
     original = make_filename(FOLDER, user_id)
 
-    target = make_filename(TASK_FOLDER,user_id, uuid.uuid4()) 
+    target = make_filename(TASK_FOLDER,user_id, task_id) 
     if os.path.exists(target):
         shutil.rmtree(target)
 
@@ -203,3 +207,19 @@ def get_tasks(user_id : str):
             
     tasklist = [f"{i+1}. %s {z[1]}" % z[0].split("/")[-1][:5]  for i,z in enumerate(zip(globlist, desc_list))]
     return "\n".join(tasklist)
+
+
+def analyse_preview_edit(preview_text:str):
+    preview_text_list = preview_text.split("\n")
+    first_line = preview_text_list[0]
+    task_id = first_line.split(":")[1].strip()
+    contents = "\n".join(preview_text_list[2:])
+    return task_id, contents
+
+def edit_task(user_id:str, task_id:str, preview_text:str):
+    target = make_filename(TASK_FOLDER,user_id, task_id) 
+    with open(target+"/conversation.json") as f:
+        conv = json.load(f)
+    conv['contents'] = preview_text
+    with open(target+"/conversation.json", "w") as f:
+        json.dump(conv, f)
