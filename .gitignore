@@ -1,0 +1,9 @@
+__pycache__
+conversations/
+tasks/
+temp_img/
+.vscode
+.ipynb_checkpoints/
+not_committed
+config.json
+*.ipynb
