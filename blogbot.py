@@ -71,10 +71,17 @@ def delete_item(message):
             bot.reply_to(message, "Cancelled")
 
 @bot.edited_message_handler(content_types=['text'])
-def handler_function(message):
+def handle_textedit_function(message):
     if validate_user(config, message):
 
         bu.edit_message(message.from_user.id, message.message_id, message.text)
+        bot.reply_to(message, 'Prompt updated')
+
+@bot.edited_message_handler(content_types=['photo'])
+def handle_captionedit_function(message):
+    if validate_user(config, message):
+
+        bu.edit_message(message.from_user.id, message.message_id, message.caption)
         bot.reply_to(message, 'Prompt updated')
 
 

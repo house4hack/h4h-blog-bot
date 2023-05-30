@@ -175,7 +175,7 @@ def process_blog(user_id : str):
     conv = get_conversation(user_id)
     conv['description'] = make_description(conv)
     conv['status'] = 'Submitted'
-    conv['task_id'] = task_id
+    conv['task_id'] = str(task_id)
     save_conversation(user_id, conv)
 
     original = make_filename(FOLDER, user_id)
