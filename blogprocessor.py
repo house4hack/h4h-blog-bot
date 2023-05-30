@@ -89,12 +89,12 @@ def process_task(task_fn : str):
     conversation["status"] = "Preview"
 
     save_conversation(task_fn, conversation)
+    
 
-    bot.send_message(conversation['user_id'],'Preview ready')
-    bot.send_message(conversation['user_id'],f"** Task-id **:{conversation['task_id']}\n--------\n{result}")
+    bot.send_message(conversation['user_id'],bu.show_contents(conversation["user_id"]))
 
 if __name__=='__main__':
-    with open('./tasks/fifo') as fifo:
+    with open('./fifo') as fifo:
         while True:
             select.select([fifo],[],[fifo])
             for task_fn in fifo:

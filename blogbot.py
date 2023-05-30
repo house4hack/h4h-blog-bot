@@ -28,6 +28,13 @@ def send_welcome(message):
 
 
 
+@bot.message_handler(commands=['preview'])
+def show_preview(message):
+    if validate_user(config, message):
+        reply = bu.show_contents(message.from_user.id)
+        bot.reply_to(message, reply)
+
+
 @bot.message_handler(commands=['clear'])
 def clear_conversation(message):
     if validate_user(config, message):
@@ -108,44 +115,6 @@ def process_blog(message):
             bot.reply_to(message, "ok")
 
 
-@bot.message_handler(commands=['tasks'])
-def show_tasks(message):
-    if validate_user(config, message):
-
-        reply = bu.get_tasks(message.from_user.id)
-        if reply.strip() == "":
-            reply = f"No tasks"
-        bot.reply_to(message, reply)
-
-
-@bot.message_handler(commands=['activate'])
-def activate_task_wizard(message):
-    if validate_user(config, message):
-        conv = bu.get_conversation(message.from_user.id)
-        prompt_count, media_count, caption_count = bu.summary_conversation(conv)
-        if prompt_count + media_count > 0:
-            reply = "You have unsubmitted changes - select 0 to abort"
-        else:
-            reply = ""
-
-        reply = bu.get_tasks(message.from_user.id)
-        if reply.strip() == "":
-            reply = f"No tasks"
-        bot.reply_to(message, "Select the task no to activate (0 to abort):\n" + reply)
-        bot.register_next_step_handler(message, activate_task)
-
-def activate_task(message):
-    task_no = message.text
-    if task_no.isnumeric():
-        task_no = int(task_no)
-        if task_no == 0 :
-            bot.reply_to(message,"Aborted")
-            return
-        task_id = bu.get_task_id(message.from_user.id, task_no)
-        bu.activate_task(message.from_user.id, task_id)
-    else:
-        bot.reply_to(message, "Could not parse")
-
 
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
@@ -168,13 +137,15 @@ def handle_photo(message):
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     if validate_user(config, message):
-        if message.text.startswith("Task-id"):
-            task_id, preview_text = bu.analyse_preview_edit(message.text)
-            bu.edit_task(message.from_user.id, task_id, preview_text)
+        if message.text.startswith("Preview"):
+            preview_text = bu.analyse_preview_edit(message.text)
+            bu.edit_preview(message.from_user.id, preview_text)
             bot.reply_to(message, "Preview updated")
         else:
             bu.add_to_conversation(message.from_user.id, message.message_id, message.text)
             bot.reply_to(message,"Prompt added")
+
+
 
 
 

@@ -7,7 +7,6 @@ import glob
 
 
 FOLDER = "./conversations/"
-TASK_FOLDER = "./tasks/"
 
 
 
@@ -18,7 +17,7 @@ def make_filename(folder, id, filename=""):
     return folder
 
 def new_convesation(user_id : int):
-    return {"user_id":user_id, "messages":[]}
+    return {"user_id":user_id, "messages":[],"status":"Draft"}
 
 def make_sane_filename(org_filename, caption):
     keepcharacters = (' ','.','_')
@@ -59,6 +58,11 @@ def validate_conversation(user_id: str):
     return status, message
 
 
+def show_contents(user_id:str):
+    conv = get_conversation(user_id)
+    result = conv['contents']
+    return f"**Preview**:\n--------\n{result}"
+
 
 def clear_conversation(user_id : str):
     if os.path.exists(make_filename(FOLDER, user_id)):
@@ -91,7 +95,7 @@ def show_conversation(user_id:str):
         else:
             pass
 
-    result = "\n".join(reply)
+    result = f"Status: {conv.get('status','Draft')}\n" + "\n".join(reply)
     if result.strip()=="":
         result = "No prompts or photos yet"
     return result
@@ -170,72 +174,32 @@ def make_description(conv):
     return " ".join(description)[:15]
 
 def process_blog(user_id : str):
-    task_id = uuid.uuid4()
 
     conv = get_conversation(user_id)
     conv['description'] = make_description(conv)
     conv['status'] = 'Submitted'
-    conv['task_id'] = str(task_id)
     save_conversation(user_id, conv)
 
-    original = make_filename(FOLDER, user_id)
 
-    target = make_filename(TASK_FOLDER,user_id, task_id) 
-    if os.path.exists(target):
-        shutil.rmtree(target)
-
-    shutil.move(original, target)
-
-    clear_conversation(user_id)
-
-    fifo = make_filename(TASK_FOLDER,"fifo")
+    fifo = make_filename("./","fifo")
     if not os.path.exists(fifo):
         os.mkfifo(fifo)
     f = open(fifo, "w")
 
-    f.write(target + "\n")
+    fn = make_filename(FOLDER, user_id)
+    f.write(fn + "\n")
     f.flush()
-
-def get_tasks(user_id : str):
-    blogfolder = make_filename(TASK_FOLDER,user_id)
-    globlist = glob.glob(blogfolder+"/*")
-    desc_list = []
-    for g in globlist.sort():
-        with open(g+"/conversation.json") as f:
-            conv = json.load(f)
-            desc_list.append(conv.get('description','') +'... [' + conv.get('status','UNKNOWN') + ']')
-            
-    tasklist = [f"{i+1}. %s {z[1]}" % z[0].split("/")[-1][:5]  for i,z in enumerate(zip(globlist, desc_list))]
-    return "\n".join(tasklist)
-
-def get_task_id(user_id : str, task_no : int):
-    blogfolder = make_filename(TASK_FOLDER,user_id)
-    globlist = glob.glob(blogfolder+"/*").sort()
-    return globlist[task_no-1]
 
 
 def analyse_preview_edit(preview_text:str):
     preview_text_list = preview_text.split("\n")
     first_line = preview_text_list[0]
-    task_id = first_line.split(":")[1].strip()
+    
     contents = "\n".join(preview_text_list[2:])
-    return task_id, contents
+    return contents
 
-def edit_task(user_id:str, task_id:str, preview_text:str):
-    target = make_filename(TASK_FOLDER,user_id, task_id) 
-    with open(target+"/conversation.json") as f:
-        conv = json.load(f)
+def edit_preview(user_id:str,  preview_text:str):
+    conv = get_conversation(user_id)
     conv['contents'] = preview_text
-    with open(target+"/conversation.json", "w") as f:
-        json.dump(conv, f)
-
-
-def activate_task(user_id:str, task_id:str):
-    clear_conversation(user_id)
-
-    original = make_filename(TASK_FOLDER,user_id, task_id) 
-
-    target = make_filename(FOLDER, user_id)
-
-    shutil.move(original, target)
+    save_conversation(user_id, conv)
 
