@@ -118,6 +118,35 @@ def show_tasks(message):
         bot.reply_to(message, reply)
 
 
+@bot.message_handler(commands=['activate'])
+def activate_task_wizard(message):
+    if validate_user(config, message):
+        conv = bu.get_conversation(message.from_user.id)
+        prompt_count, media_count, caption_count = bu.summary_conversation(conv)
+        if prompt_count + media_count > 0:
+            reply = "You have unsubmitted changes - select 0 to abort"
+        else:
+            reply = ""
+
+        reply = bu.get_tasks(message.from_user.id)
+        if reply.strip() == "":
+            reply = f"No tasks"
+        bot.reply_to(message, "Select the task no to activate (0 to abort):\n" + reply)
+        bot.register_next_step_handler(message, activate_task)
+
+def activate_task(message):
+    task_no = message.text
+    if task_no.isnumeric():
+        task_no = int(task_no)
+        if task_no == 0 :
+            bot.reply_to(message,"Aborted")
+            return
+        task_id = bu.get_task_id(message.from_user.id, task_no)
+        bu.activate_task(message.from_user.id, task_id)
+    else:
+        bot.reply_to(message, "Could not parse")
+
+
 @bot.message_handler(content_types=['photo'])
 def handle_photo(message):
     if validate_user(config, message):

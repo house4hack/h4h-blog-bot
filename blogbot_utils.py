@@ -200,13 +200,18 @@ def get_tasks(user_id : str):
     blogfolder = make_filename(TASK_FOLDER,user_id)
     globlist = glob.glob(blogfolder+"/*")
     desc_list = []
-    for g in globlist:
+    for g in globlist.sort():
         with open(g+"/conversation.json") as f:
             conv = json.load(f)
             desc_list.append(conv.get('description','') +'... [' + conv.get('status','UNKNOWN') + ']')
             
     tasklist = [f"{i+1}. %s {z[1]}" % z[0].split("/")[-1][:5]  for i,z in enumerate(zip(globlist, desc_list))]
     return "\n".join(tasklist)
+
+def get_task_id(user_id : str, task_no : int):
+    blogfolder = make_filename(TASK_FOLDER,user_id)
+    globlist = glob.glob(blogfolder+"/*").sort()
+    return globlist[task_no-1]
 
 
 def analyse_preview_edit(preview_text:str):
@@ -223,3 +228,14 @@ def edit_task(user_id:str, task_id:str, preview_text:str):
     conv['contents'] = preview_text
     with open(target+"/conversation.json", "w") as f:
         json.dump(conv, f)
+
+
+def activate_task(user_id:str, task_id:str):
+    clear_conversation(user_id)
+
+    original = make_filename(TASK_FOLDER,user_id, task_id) 
+
+    target = make_filename(FOLDER, user_id)
+
+    shutil.move(original, target)
+
