@@ -27,6 +27,8 @@ def make_sane_filename(org_filename, caption):
     else:
         filename = ""
 
+    filename = filename[:30]
+
     _ , file_extension = os.path.splitext(org_filename)
     return f"{filename}{uuid.uuid4()}{file_extension}" 
 
@@ -46,13 +48,18 @@ def summary_conversation(conv):
     return prompt_count, media_count, caption_count
 
 
-def validate_conversation(user_id: str):
+def validate_conversation(user_id: str, check_preview : bool = False):
     conv = get_conversation(user_id)
     prompt_count, media_count, caption_count = summary_conversation(conv)
     status = True
     message = ""
     if (prompt_count == 0 and caption_count==0) or media_count==0:
             message = "For a blog post, you need at least one prompt (or caption) and one photo"
+            status = False
+
+    if check_preview:
+        if conv.get("contents","") == "":
+            message += "\nPlease generate a preview before publishing using /make"
             status = False
 
     return status, message
@@ -187,7 +194,23 @@ def process_blog(user_id : str):
     f = open(fifo, "w")
 
     fn = make_filename(FOLDER, user_id)
-    f.write(fn + "\n")
+    f.write("preview,"+fn + "\n")
+    f.flush()
+
+def publish_blog(user_id : str):
+
+    conv = get_conversation(user_id)
+    conv['status'] = 'Published'
+    save_conversation(user_id, conv)
+
+
+    fifo = make_filename("./","fifo")
+    if not os.path.exists(fifo):
+        os.mkfifo(fifo)
+    f = open(fifo, "w")
+
+    fn = make_filename(FOLDER, user_id)
+    f.write("publish,"+fn + "\n")
     f.flush()
 
 

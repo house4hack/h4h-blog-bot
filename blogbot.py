@@ -101,7 +101,7 @@ def process_blog_wizard(message):
         if not status:
             bot.reply_to(message, f'Nope! {status_message}\n' + reply)
         if status:
-            bot.reply_to(message, f'Are you sure you want to create a blog entry based on the below? (type yes)\n' + reply)
+            bot.reply_to(message, f'Are you sure you want to create a preview based on the below? (type yes)\n' + reply)
             bot.register_next_step_handler(message, process_blog)
 
 
@@ -113,6 +113,31 @@ def process_blog(message):
             bu.process_blog(message.from_user.id)
         else:
             bot.reply_to(message, "ok")
+
+
+
+@bot.message_handler(commands=['publish'])
+def plubish_blog_wizard(message):
+    if validate_user(config, message):
+
+        status, status_message = bu.validate_conversation(message.from_user.id)
+        reply = bu.show_conversation(message.from_user.id)
+        if not status:
+            bot.reply_to(message, f'Nope! {status_message}\n' + reply)
+        if status:
+            bot.reply_to(message, f'Are you sure you want to create a blog entry based on the below? (type yes)\n' + reply)
+            bot.register_next_step_handler(message, publish_blog)
+
+
+def publish_blog(message):
+    if validate_user(config, message):
+
+        if message.text.strip().lower() == 'yes':
+            bot.reply_to(message, "Publishing, this may take a while")
+            bu.publish_blog(message.from_user.id)
+        else:
+            bot.reply_to(message, "ok")
+
 
 
 
@@ -137,7 +162,7 @@ def handle_photo(message):
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     if validate_user(config, message):
-        if message.text.startswith("Preview"):
+        if message.text.startswith(">>>Preview<<<"):
             preview_text = bu.analyse_preview_edit(message.text)
             bu.edit_preview(message.from_user.id, preview_text)
             bot.reply_to(message, "Preview updated")

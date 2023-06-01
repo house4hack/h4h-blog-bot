@@ -6,6 +6,11 @@ import select
 import traceback
 import sys
 
+import requests
+import base64
+import os
+import re
+from datetime import datetime
 
 with open ("config.json") as f:
     config = json.load(f)
@@ -86,22 +91,101 @@ def process_task(task_fn : str):
 
 
     conversation["contents"] = result
-    conversation["status"] = "Preview"
+    conversation["status"] = ">>>Preview<<<"
 
     save_conversation(task_fn, conversation)
     
 
     bot.send_message(conversation['user_id'],bu.show_contents(conversation["user_id"]))
 
+
+def publish_task(task_fn):
+    conversation = load_conversation(task_fn)
+    re_comp = re.compile("\[Photo_[0-9]+\]",re.IGNORECASE)
+    user = config['wordpress_user']
+    password = config['wordpress_key']
+    credentials = user + ':' + password
+    token = base64.b64encode(credentials.encode())
+
+    for m in conversation['messages']:
+        if m['kind']=='media':
+            toUploadImagePath = task_fn+"/"+m['filename']
+            mediaImageBytes = open(toUploadImagePath, 'rb').read()
+
+
+            uploadImageFilename = m['filename']
+            _, ext = os.path.splitext(m['filename'])
+            curHeaders = {
+            'Authorization': 'Basic ' + token.decode('utf-8'),
+            "Content-Type": f"image/{ext[1:]}",
+            "Accept": "application/json",
+            'Content-Disposition': "attachment; filename=%s" % uploadImageFilename,
+            }
+
+            resp = requests.post(
+            config["wordpress_v2_json"]+"/media",
+            headers=curHeaders,
+            data=mediaImageBytes,
+            )
+
+            jj = resp.json()
+
+            m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
+
+    save_conversation(task_fn, conversation)
+    contents = conversation['contents']
+    for m in conversation['messages']:
+        if m['kind'] == 'media':
+            if m.get('slug','') != '':
+                href = m['uploaded_href']
+                slug = m['slug']
+                caption = m.get("text","")
+                re_comp = re.compile(f"\[{slug}\]",re.IGNORECASE)
+                contents = re_comp.sub(f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure><figcaption class="wp-caption-text">{caption}</figcaption>\n<br/>', contents)
+            else:
+                href = m['uploaded_href']
+                contents += f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure>\n<br/>'
+
+
+    title = contents.split("\n")[0]
+    contents = "\n".join(contents.split("\n")[1:])
+
+    title = title.split("Title:")[1].strip()
+
+    user = config['wordpress_user']
+    password = config['wordpress_key']
+    credentials = user + ':' + password
+    token = base64.b64encode(credentials.encode())
+    header = {'Authorization': 'Basic ' + token.decode('utf-8')}
+
+    post = {
+    'title'    : title,
+    'status'   : 'draft', 
+    'content'  : contents,
+    'categories': 38, # category ID
+    'date'   : datetime.now().isoformat().split('.')[0]
+    }
+    responce = requests.post(config["wordpress_v2_json"]+"/posts" , headers=header, json=post)
+    print(responce)
+    bot.send_message(conversation['user_id'],f"Saved as draft on wordpress: {title}")
+    
+
+
 if __name__=='__main__':
     with open('./fifo') as fifo:
         while True:
             select.select([fifo],[],[fifo])
-            for task_fn in fifo:
+            for task in fifo:
                 try:
-                    if task_fn is not None:
+                    if task is not None:
+                        tasktype, task_fn = task.strip().split(",")
                         print(f"Starting {task_fn}")
-                        process_task(task_fn.strip())
+
+                        if tasktype == "preview":
+                            process_task(task_fn)
+                        elif tasktype == "publish":
+                            publish_task(task_fn)
+
                 except Exception as e:
                     print(e)
                     traceback.print_exc(file=sys.stdout)
