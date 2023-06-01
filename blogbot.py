@@ -17,14 +17,27 @@ def validate_user(config, message):
     if message.from_user.id in config["users"]:
         return True
     else:
-        bot.reply_to(message, "Access denied")
+        bot.reply_to(message, "Access denied - enter the password to get access")
+        bot.register_next_step_handler(message, check_password)
         return False
+    
+def check_password(message):
+    if message.text == config['access_password']:
+        config['users'].append(message.from_user.id)
+        with open("config.json","w") as f:
+            json.dump(config, f)
+        bot.reply_to(message, "Added to access list")
+    else:
+        bot.reply_to(message, "Access denied - enter the password to get access")
+        bot.register_next_step_handler(message, check_password)
+
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
     if validate_user(config, message):
-        print(message)
-        bot.reply_to(message, "Howdy, how are you doing?")
+        with open("commands.md") as f:
+            commands = f.readlines()
+        bot.reply_to(message, "".join(commands))
 
 
 
@@ -158,8 +171,19 @@ def handle_photo(message):
         bu.add_to_conversation(message.from_user.id,message.message_id, message.caption, fn)
         bot.reply_to(message, "Image added")
 
+@bot.message_handler(commands=['stash'])
+def stash_handler(message):
+    if validate_user(config, message):    
+        token = bu.stash(message.from_user.id)
+        bu.clear_conversation(message.from_user.id)
+        bot.reply_to(message, f"Stashed:{token}")  
 
-@bot.message_handler(content_types=['text'])
+
+@bot.message_handler(commands=['stashlist'])
+def stash_handler(message):
+    if validate_user(config, message):    
+        bot.reply_to(message, bu.stash_list(message.from_user.id))
+                     
 def handle_text(message):
     if validate_user(config, message):
         if message.text.startswith(">>>Preview<<<"):
@@ -169,7 +193,6 @@ def handle_text(message):
         else:
             bu.add_to_conversation(message.from_user.id, message.message_id, message.text)
             bot.reply_to(message,"Prompt added")
-
 
 
 

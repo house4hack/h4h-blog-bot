@@ -1,6 +1,7 @@
 __pycache__
 conversations/
 tasks/
+stash/
 temp_img/
 .vscode
 .ipynb_checkpoints/

@@ -1,5 +1,6 @@
 import uuid
 import os.path
+from pathlib import Path
 import json
 import time
 import shutil
@@ -7,6 +8,7 @@ import glob
 
 
 FOLDER = "./conversations/"
+STASH_FOLDER = "./stash/"
 
 
 
@@ -225,4 +227,36 @@ def edit_preview(user_id:str,  preview_text:str):
     conv = get_conversation(user_id)
     conv['contents'] = preview_text
     save_conversation(user_id, conv)
+
+def stash(user_id:str):
+    stash_parent = make_filename(STASH_FOLDER,user_id)
+    if not os.path.exists(stash_parent):
+        os.mkdir(stash_parent)
+
+    original = make_filename(FOLDER, user_id)
+    token = str(uuid.uuid4())
+    stash_folder = make_filename(STASH_FOLDER,user_id, token )
+
+    shutil.move(original, stash_folder)
+    return token
+
+
+def stash_list(user_id:str):
+    dirpath = STASH_FOLDER+"/"+str(user_id)
+    paths = sorted(Path(dirpath).iterdir(), key=os.path.getmtime)
+    return "\n".join([str(p) for p in paths])
+
+
+
+def unstash(user_id:str, taskno:int):
+    clear_conversation(user_id)
+    stash_parent = make_filename(STASH_FOLDER,user_id)
+    if not os.path.exists(stash_parent):
+        os.mkdir(stash_parent)
+
+    original = make_filename(FOLDER, user_id)
+    stash_folder = make_filename(STASH_FOLDER,user_id, str(uuid.uuid4()) )
+
+    shutil.move(original, stash_folder)
+
 
