@@ -13,15 +13,18 @@ STASH_FOLDER = "./stash/"
 
 
 def make_filename(folder, id, filename=""):
+    '''Makes a filename from the folder and id'''
     folder = str(folder) + str(id) 
     if filename != "":
         folder += "/" +str(filename)
     return folder
 
 def new_convesation(user_id : int):
+    '''Creates a new conversation'''
     return {"user_id":user_id, "messages":[],"status":"Draft"}
 
 def make_sane_filename(org_filename, caption):
+    '''Makes a sane filename from the original filename and the caption'''
     keepcharacters = (' ','.','_')
     if caption is not None:
         filename = "".join(c for c in caption if c.isalnum() or c in keepcharacters).rstrip()
@@ -36,10 +39,12 @@ def make_sane_filename(org_filename, caption):
 
 
 def summary_conversation_for_user(user_id:int):
+    '''Returns a summary of the conversation for the user'''
     conv = get_conversation(user_id)
     return summary_conversation(conv)
 
 def summary_conversation(conv):
+    '''Returns a summary of the conversation'''
     media_count = 0
     prompt_count = 0
     caption_count = 0
@@ -55,6 +60,7 @@ def summary_conversation(conv):
 
 
 def validate_conversation(user_id: str, check_preview : bool = False):
+    '''Validates the conversation for the user'''
     conv = get_conversation(user_id)
     prompt_count, media_count, caption_count = summary_conversation(conv)
     status = True
@@ -71,18 +77,15 @@ def validate_conversation(user_id: str, check_preview : bool = False):
     return status, message
 
 
-def show_contents(user_id:str):
-    conv = get_conversation(user_id)
-    result = conv['contents']
-    return f"**Preview**:\n--------\n{result}"
-
 
 def clear_conversation(user_id : str):
+    '''Clears the conversation for the user'''
     if os.path.exists(make_filename(FOLDER, user_id)):
         shutil.rmtree(make_filename(FOLDER, user_id))
     
 
 def edit_message(user_id:str, message_id:str, new_prompt:str):
+    '''Edits the message for the user'''
     conv = get_conversation(user_id)
     for m in conv['messages']:
         if m['id'] == message_id:
@@ -94,8 +97,8 @@ def save_conversation(user_id, conv):
     with open(make_filename(FOLDER,user_id,"conversation.json"),'w') as f:
         json.dump(conv, f)
 
-
-def show_conversation(user_id:str):
+def show_conversation_as_list(user_id:str):
+    '''Shows the conversation for the user as a list'''
     conv = get_conversation(user_id)
     reply = []
     for i,m in enumerate(conv['messages']):
@@ -107,13 +110,37 @@ def show_conversation(user_id:str):
                 reply[-1] += ':'+m['text'] 
         else:
             pass
+    return reply
 
-    result = f"Status: {conv.get('status','Draft')}\n" + "\n".join(reply)
+# add functions to get and set the status of the conversation
+def get_status(user_id:str):
+    '''Gets the status of the conversation for the user'''
+    conv = get_conversation(user_id)
+    return conv['status']
+
+def set_status(user_id:str, status:str):
+    '''Sets the status of the conversation for the user'''
+    conv = get_conversation(user_id)
+    # validate the status as either Draft, Published or Generating or Preview
+    if status not in ['Draft', 'Published', 'Generating', 'Preview']:
+        raise Exception("Invalid status")
+    conv['status'] = status
+    save_conversation(user_id, conv)
+
+def show_conversation(user_id:str):
+    '''Shows the conversation for the user'''
+    conv = get_conversation(user_id)
+    reply = show_conversation_as_list(user_id)
+
+    result = f"Status: {conv['status']}\n" + "\n".join(reply)
     if result.strip()=="":
         result = "No prompts or photos yet"
     return result
 
+
+
 def remove_item(user_id:str, item:str):
+    '''Removes the item from the conversation for the user'''
     success = True
     conv = get_conversation(user_id)
 
@@ -130,6 +157,7 @@ def remove_item(user_id:str, item:str):
 
 
 def add_to_conversation(user_id : str , message_id, text: str , image_file = None):
+    '''Adds to the conversation for the user'''
     is_new = False
     if not os.path.exists(make_filename(FOLDER, user_id)):
         os.mkdir(make_filename(FOLDER, user_id))
@@ -166,6 +194,7 @@ def add_to_conversation(user_id : str , message_id, text: str , image_file = Non
     return {"is_new":is_new}
 
 def get_conversation(user_id : str):
+    '''Gets the conversation for the user'''
     conversation = new_convesation(user_id)
     try:
         fn = make_filename(FOLDER, user_id,"conversation.json")
@@ -173,13 +202,13 @@ def get_conversation(user_id : str):
             text = f.readlines()
             conversation = json.loads("".join(text))
     except Exception as e:
-        print(e)
         pass
     return conversation
 
 
 
 def make_description(conv):
+    '''Makes a description for the conversation'''
     description = []
     for m in conv['messages']:
         if m['kind'] == 'text':
@@ -187,6 +216,7 @@ def make_description(conv):
     return " ".join(description)[:15]
 
 def process_blog(user_id : str):
+    '''Processes the blog for the user'''
 
     conv = get_conversation(user_id)
     conv['description'] = make_description(conv)
@@ -204,6 +234,7 @@ def process_blog(user_id : str):
     f.flush()
 
 def publish_blog(user_id : str):
+    '''Publishes the blog for the user'''
 
     conv = get_conversation(user_id)
     conv['status'] = 'Published'
@@ -219,33 +250,66 @@ def publish_blog(user_id : str):
     f.write("publish,"+fn + "\n")
     f.flush()
 
-
-def analyse_preview_edit(preview_text:str):
-    preview_text_list = preview_text.split("\n")
-    first_line = preview_text_list[0]
-    
-    contents = "\n".join(preview_text_list[2:])
-    return contents
-
-def edit_preview(user_id:str,  preview_text:str):
+def get_contents(user_id:str):
+    '''Gets the preview text for the user'''
     conv = get_conversation(user_id)
-    conv['contents'] = preview_text
-    save_conversation(user_id, conv)
+    return conv.get('contents','')
+
+def get_title(user_id:str):
+    '''Gets the title for the user'''
+    conv = get_conversation(user_id)
+    return conv.get('title','')
+
+
+def set_title(user_id:str,  title_text:str):
+    '''Sets the title for the user'''
+    try:
+        title_text = title_text.strip()
+        conv = get_conversation(user_id)
+        conv['title'] = title_text
+        save_conversation(user_id, conv)
+        return True
+    except:
+        return False
+
+def set_contents(user_id:str,  contents_text:str):
+    '''Edits the preview text for the user'''
+    try:
+        contents_text = contents_text.strip()
+        conv = get_conversation(user_id)
+        conv['contents'] = contents_text
+        save_conversation(user_id, conv)
+        return True
+    except:
+        return False
 
 def stash(user_id:str):
+    '''Stashes the conversation for the user'''
     stash_parent = make_filename(STASH_FOLDER,user_id)
     if not os.path.exists(stash_parent):
         os.mkdir(stash_parent)
 
     original = make_filename(FOLDER, user_id)
-    token = str(uuid.uuid4())
+    conv = get_conversation(user_id)
+
+    if 'stash_token' in conv:
+        token = conv['stash_token']
+    else:
+        token = str(uuid.uuid4())
+        conv['stash_token'] = token
+
+    save_conversation(user_id, conv)
+
     stash_folder = make_filename(STASH_FOLDER,user_id, token )
+    if os.path.exists(stash_folder):
+        shutil.rmtree(stash_folder)
 
     shutil.move(original, stash_folder)
     return token
 
 
 def stash_list(user_id:str):
+    '''Lists the stashes for the user'''
     dirpath = STASH_FOLDER+"/"+str(user_id)
     paths = sorted(Path(dirpath).iterdir(), key=os.path.getmtime)
     l = []
@@ -267,6 +331,7 @@ def stash_list(user_id:str):
 
 
 def unstash(user_id:str, taskno:int):
+    '''Unstashes the conversation for the user'''
     taskno = int(taskno)
     clear_conversation(user_id)
     stash_parent = make_filename(STASH_FOLDER,user_id)
@@ -281,4 +346,30 @@ def unstash(user_id:str, taskno:int):
 
     shutil.move(str(unstash_folder), target)
 
+
+def delete_stash(user_id:str, taskno:int):
+    '''Deletes the stash for the user'''
+    taskno = int(taskno)
+    stash_parent = make_filename(STASH_FOLDER,user_id)
+    if not os.path.exists(stash_parent):
+        os.mkdir(stash_parent)
+
+    dirpath = STASH_FOLDER+"/"+str(user_id)
+    paths = sorted(Path(dirpath).iterdir(), key=os.path.getmtime)
+
+    unstash_folder = paths[taskno-1]
+
+    shutil.rmtree(str(unstash_folder))
+
+
+def edit_item(user_id:str, taskno:int, text:str):
+    '''Edits the item for the user'''
+    try:
+        taskno = int(taskno)
+        conv = get_conversation(user_id)
+        conv['messages'][taskno-1]['text'] = text
+        save_conversation(user_id, conv)
+        return True
+    except Exception as e:
+        return False
 

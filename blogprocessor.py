@@ -21,6 +21,7 @@ bot = telebot.TeleBot(config['telegram_bot'])
 
 
 def update_status(task_fn : str, status: str):
+    '''Updates the status of the task'''
 
     conversation = load_conversation(task_fn)
 
@@ -29,25 +30,22 @@ def update_status(task_fn : str, status: str):
     save_conversation(task_fn, conversation)
 
 def load_conversation(task_fn:str):
+    '''Loads the conversation from the file'''
     with open(task_fn+"/conversation.json") as f:
         conversation = json.load(f)
     return conversation
 
 
 def save_conversation(task_fn:str, conversation):
+    '''Saves the conversation to the file'''
     with open(task_fn+"/conversation.json", "w") as f:
         json.dump(conversation, f)
 
 
 def process_task(task_fn : str):
+    '''Processes the task'''
     update_status(task_fn, 'Generating')
     conversation = load_conversation(task_fn)
-    prompt_count, photo_count, caption_count = bu.summary_conversation(conversation)
-
-    if photo_count < 5:
-        kind = "blog"
-    else:
-        kind = "gallery"
 
     text_list = []
 
@@ -65,15 +63,15 @@ def process_task(task_fn : str):
 
     caption_str = "\n".join([f"Photo_{c[0]} : \"{c[2]}\"" for c in caption_list])
 
-    if kind == "blog":
-        prompt = f"""Write a blog article about: "{". ".join(text_list)}"
-        I have {len(caption_list)} photos to add in the article, with the following captions:
-        {caption_str}
-        
-        Indicate the location of the photo using square brackes, for example to place photo_1 write [photo_1].
-        
-        Add a title for the blog post at the top.
-        """
+
+    prompt = f"""Write a blog article about: "{". ".join(text_list)}"
+    I have {len(caption_list)} photos to add in the article, with the following captions:
+    {caption_str}
+    
+    Indicate the location of the photo using square brackes, for example to place photo_1 write [photo_1].  Do not place photos in the middle of a sentence or paragraph, place it between paragraphs or at the end.
+    
+    Add a title for the blog post at the top.
+    """
 
     openai.api_key = config['open_ai_key']
 
@@ -85,22 +83,29 @@ def process_task(task_fn : str):
             ]
     )
 
-    result = ''
+    contents = ''
     for choice in response.choices:
-        result += choice.message.content
+        contents += choice.message.content
 
+    title = contents.split("\n")[0]
+    contents = "\n".join(contents.split("\n")[1:])
 
-    conversation["contents"] = result
-    conversation["status"] = ">>>Preview<<<"
+    title = title.split("Title:")[1].strip()
 
-    save_conversation(task_fn, conversation)
-    
+    bu.set_status(conversation['user_id'], "Preview")
+    bu.set_contents(conversation['user_id'], contents)
+    bu.set_title(conversation['user_id'], title)
 
-    bot.send_message(conversation['user_id'],bu.show_contents(conversation["user_id"]))
+    contents = bu.get_contents(conversation['user_id'])
+    title = bu.get_title(conversation['user_id'])
+    preview = f"Title: {title}\n\n{contents}"
+    bot.send_message(conversation['user_id'],preview)
 
 
 def publish_task(task_fn):
+    '''Publishes the task to the blog'''
     conversation = load_conversation(task_fn)
+    print(conversation)
     re_comp = re.compile("\[Photo_[0-9]+\]",re.IGNORECASE)
     user = config['wordpress_user']
     password = config['wordpress_key']
@@ -134,6 +139,7 @@ def publish_task(task_fn):
 
     
     contents = conversation['contents']
+    title = conversation['title']
     for m in conversation['messages']:
         if m['kind'] == 'media':
             if m.get('slug','') != '':
@@ -147,12 +153,6 @@ def publish_task(task_fn):
                 contents += f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure>\n<br/>'
 
 
-    title = contents.split("\n")[0]
-    contents = "\n".join(contents.split("\n")[1:])
-
-    title = title.split("Title:")[1].strip()
-    conversation['title'] = title
-    save_conversation(task_fn, conversation)
 
     user = config['wordpress_user']
     password = config['wordpress_key']
@@ -170,6 +170,8 @@ def publish_task(task_fn):
     responce = requests.post(config["wordpress_v2_json"]+"/posts" , headers=header, json=post)
     print(responce)
     bot.send_message(conversation['user_id'],f"Saved as draft on wordpress: {title}")
+    bu.set_status(conversation['user_id'], "Published")
+    
     
 
 
