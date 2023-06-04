@@ -183,7 +183,28 @@ def stash_handler(message):
 def stash_handler(message):
     if validate_user(config, message):    
         bot.reply_to(message, bu.stash_list(message.from_user.id))
-                     
+
+@bot.message_handler(commands=['unstash'])
+def unstash_wizard(message):
+    if validate_user(config, message):    
+        prompt_count, photo_count, caption_count =  bu.summary_conversation_for_user(int(message.from_user.id))
+        count = prompt_count + photo_count + caption_count
+        if count > 0:
+            bot.reply_to(message, "You have unsaved items in your conversation. Please /stash or /clear before unstashing")
+        else:
+            bot.reply_to(message, "Select the item you wish to unstash (0 to cancel):\n" + bu.stash_list(message.from_user.id))
+            bot.register_next_step_handler(message, unstash_handler)
+
+def unstash_handler(message):
+    if validate_user(config, message):    
+        if message.text != '0':
+            bu.unstash(message.from_user.id, message.text)
+            bot.reply_to(message, "Unstashed")
+        else:
+            bot.reply_to(message, "Cancelled")
+        
+
+
 def handle_text(message):
     if validate_user(config, message):
         if message.text.startswith(">>>Preview<<<"):

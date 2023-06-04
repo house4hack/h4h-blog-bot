@@ -35,6 +35,10 @@ def make_sane_filename(org_filename, caption):
     return f"{filename}{uuid.uuid4()}{file_extension}" 
 
 
+def summary_conversation_for_user(user_id:int):
+    conv = get_conversation(user_id)
+    return summary_conversation(conv)
+
 def summary_conversation(conv):
     media_count = 0
     prompt_count = 0
@@ -244,19 +248,37 @@ def stash(user_id:str):
 def stash_list(user_id:str):
     dirpath = STASH_FOLDER+"/"+str(user_id)
     paths = sorted(Path(dirpath).iterdir(), key=os.path.getmtime)
-    return "\n".join([str(p) for p in paths])
+    l = []
+    for i,p in enumerate(paths):
+        with open(str(p)+"/conversation.json") as f:
+            conv = json.load(f)
+        text = ""
+        if 'title' in conv:
+            text = conv['title']
+        elif 'description' in conv:
+            text = conv['description']
+        else:
+            text = conv['contents']
+        l.append(f"{i+1}. {text[:30]} ({conv['status']})")
+    return "\n".join(l)
+
+
 
 
 
 def unstash(user_id:str, taskno:int):
+    taskno = int(taskno)
     clear_conversation(user_id)
     stash_parent = make_filename(STASH_FOLDER,user_id)
     if not os.path.exists(stash_parent):
         os.mkdir(stash_parent)
 
-    original = make_filename(FOLDER, user_id)
-    stash_folder = make_filename(STASH_FOLDER,user_id, str(uuid.uuid4()) )
+    target = make_filename(FOLDER, user_id)
+    dirpath = STASH_FOLDER+"/"+str(user_id)
+    paths = sorted(Path(dirpath).iterdir(), key=os.path.getmtime)
 
-    shutil.move(original, stash_folder)
+    unstash_folder = paths[taskno-1]
+
+    shutil.move(str(unstash_folder), target)
 
 

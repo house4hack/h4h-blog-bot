@@ -132,7 +132,7 @@ def publish_task(task_fn):
 
             m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
 
-    save_conversation(task_fn, conversation)
+    
     contents = conversation['contents']
     for m in conversation['messages']:
         if m['kind'] == 'media':
@@ -151,6 +151,8 @@ def publish_task(task_fn):
     contents = "\n".join(contents.split("\n")[1:])
 
     title = title.split("Title:")[1].strip()
+    conversation['title'] = title
+    save_conversation(task_fn, conversation)
 
     user = config['wordpress_user']
     password = config['wordpress_key']
