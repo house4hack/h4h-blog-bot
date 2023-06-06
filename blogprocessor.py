@@ -49,7 +49,7 @@ class BlogProcessorWorker(threading.Thread):
                 except Exception as e:
                     print(e)
                     traceback.print_exc()
-                    self.bot.send_message(user_id, "Something went wrong, please try again later: {}".format(e))
+                    self.bot.send_message(user_id, "Something went wrong, please try again later:\n {}".format(e))
 
 
     def process_task(self, user_id : str):
@@ -72,6 +72,7 @@ class BlogProcessorWorker(threading.Thread):
                     m['slug'] = f"Photo_{i}"
                     i+=1
 
+        bu.save_conversation(user_id, conversation)
         caption_str = "\n".join([f"Photo_{c[0]} : \"{c[2]}\"" for c in caption_list])
 
 
@@ -145,11 +146,22 @@ class BlogProcessorWorker(threading.Thread):
                 data=mediaImageBytes,
                 )
 
+                if resp.status_code != 201 and resp.status_code != 200:
+                    raise Exception("Error uploading image: {}".format(resp.reason))
+
                 jj = resp.json()
 
-                m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
+                if jj['mime_type'].startswith("video"):
+                    m['uploaded_href'] = jj['source_url']
+                    height = jj['media_details']['height']
+                    width = jj['media_details']['width'] 
+                    m['tag'] = f'[video width="{width}" height="{height}" mp4="{jj["source_url"]}"][/video]'
+                else:
+                    m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
+                    m['tag']=f"""<img src="{m['uploaded_href']}" alt="{m.get('text','')}" />"""
 
-        bu.save_conversation(user_id, conversation)
+                bu.save_conversation(user_id, conversation)
+
         contents = conversation['contents']
 
         today = datetime.strftime(datetime.now(),"%Y/%m/%d")
@@ -161,8 +173,10 @@ class BlogProcessorWorker(threading.Thread):
                     href = m['uploaded_href']
                     slug = m['slug']
                     caption = m.get("text","")
+                    tag = m.get("tag","")
                     re_comp = re.compile(f"\[{slug}\]",re.IGNORECASE)
-                    contents = re_comp.sub(f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure><figcaption class="wp-caption-text">{caption}</figcaption>\n<br/>', contents)
+                    contents = re_comp.sub(f'<figure class="wp-block-image size-large">{tag}</figure><figcaption class="wp-caption-text">{caption}</figcaption>\n<br/>', contents)
+                    # <figure class="wp-block-image size-large">[video width="720" height="1280" mp4="http://www.house4hack.co.za/wp-content/uploads/2023/06/d952c368-ff0b-45d6-8ba8-67071336142b.mp4"][/video]</figure>
                 else:
                     href = m['uploaded_href']
                     contents += f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure>\n<br/>'
@@ -183,7 +197,6 @@ class BlogProcessorWorker(threading.Thread):
         'date'   : datetime.now().isoformat().split('.')[0]
         }
         responce = requests.post(self.config["wordpress_v2_json"]+"/posts" , headers=header, json=post)
-        print(responce)
         self.bot.send_message(user_id,f"Saved as draft on wordpress: {title}")
         bu.set_status(user_id, "Published")
         

@@ -69,7 +69,7 @@ def validate_conversation(user_id: str, check_preview : bool = False):
     status = True
     message = ""
     if (prompt_count == 0 and caption_count==0) or media_count==0:
-            message = "For a blog post, you need at least one prompt (or caption) and one photo"
+            message = "For a blog post, you need at least one prompt (or caption) and one media file"
             status = False
 
     if check_preview:
@@ -108,7 +108,7 @@ def show_conversation_as_list(user_id:str):
         if m['kind'] == 'text':
             reply.append(str(i+1) +". Prompt:" + m['text'])
         elif m['kind'] == 'media':
-            reply.append(str(i+1)+". Photo")
+            reply.append(str(i+1)+". Media")
             if m.get('text',None) is not None:
                 reply[-1] += ':'+m['text'] 
         else:
@@ -130,6 +130,9 @@ def set_status(user_id:str, status:str):
     conv['status'] = status
     save_conversation(user_id, conv)
 
+
+# TODO: make show conversation status aware, show the title and contents if status is preview or published
+
 def show_conversation(user_id:str):
     '''Shows the conversation for the user'''
     conv = get_conversation(user_id)
@@ -137,7 +140,7 @@ def show_conversation(user_id:str):
 
     result = f"Status: {conv['status']}\n" + "\n".join(reply)
     if result.strip()=="":
-        result = "No prompts or photos yet"
+        result = "No prompts or media yet"
     return result
 
 

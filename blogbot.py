@@ -120,8 +120,8 @@ def edit_wizard(message):
             reply_list.append(f"{title_item}. Title: "+bu.get_title(message.from_user.id))
             reply_list.append(f"{contents_item}. Contents: "+bu.get_contents(message.from_user.id)[:50]+"...")
         else:
-            title_item = 0
-            contents_item = 0
+            title_item = 9999
+            contents_item = 9999
 
         reply = "\n".join(reply_list)
         reply += "\n"
@@ -278,6 +278,24 @@ def handle_photo(message):
         
         bu.add_to_conversation(message.from_user.id,message.message_id, message.caption, fn)
         bot.reply_to(message, "Image added")
+
+@bot.message_handler(content_types=['video'])
+def handle_video(message):
+    '''Handles the adding of video'''
+    if validate_user(config, message):
+        fileID = message.video.file_id
+        file_info = bot.get_file(fileID)
+        downloaded_file = bot.download_file(file_info.file_path)
+        _, ext = os.path.splitext(file_info.file_path)
+
+        fn = FOLDER + f"video-{uuid.uuid4()}{ext}"
+        with open(fn, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        
+        bu.add_to_conversation(message.from_user.id,message.message_id, message.caption, fn)
+        bot.reply_to(message, "Video added")
+
+
 
 @bot.message_handler(commands=['stash'])
 def stash_handler(message):
