@@ -187,27 +187,27 @@ class BlogProcessorWorker(threading.Thread):
     
 
 
-if __name__=='__main__':
-    config = json.load(open("config.json"))
-    work_queue = queue.Queue()
-    worker = BlogProcessorWorker(work_queue, config)
-    worker.daemon = True
-    worker.start()
-
-    inFD = os.open('./fifo', os.O_RDWR | os.O_NONBLOCK)
-    sIn = os.fdopen(inFD, 'r')
-    while True:
-        select.select([sIn],[],[sIn])
-        for task in sIn:
-            try:
-                if task is not None:
-                    tasktype, user_id = task.strip().split(",")
-                    print(f"Starting {tasktype} for {user_id}")
-                    work_queue.put_nowait((tasktype, user_id))
-                    #work_queue.join()
-                time.sleep(1)
-                    
-
-            except Exception as e:
-                print(e)
-                traceback.print_exc(file=sys.stdout)
+#if __name__=='__main__':
+#    config = json.load(open("config.json"))
+#    work_queue = queue.Queue()
+#    worker = BlogProcessorWorker(work_queue, config)
+#    worker.daemon = True
+#    worker.start()
+#
+#    inFD = os.open('./fifo', os.O_RDWR | os.O_NONBLOCK)
+#    sIn = os.fdopen(inFD, 'r')
+#    while True:
+#        select.select([sIn],[],[sIn])
+#        for task in sIn:
+#            try:
+#                if task is not None:
+#                    tasktype, user_id = task.strip().split(",")
+#                    print(f"Starting {tasktype} for {user_id}")
+#                    work_queue.put_nowait((tasktype, user_id))
+#                    #work_queue.join()
+#                time.sleep(1)
+#                    
+#
+#            except Exception as e:
+#                print(e)
+#                traceback.print_exc(file=sys.stdout)

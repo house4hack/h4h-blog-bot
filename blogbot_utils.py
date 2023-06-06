@@ -5,7 +5,7 @@ import json
 import time
 import shutil
 import glob
-
+import queue
 
 FOLDER = "./conversations/"
 STASH_FOLDER = "./stash/"
@@ -218,7 +218,7 @@ def make_description(conv):
             description.append(m.get('text',''))
     return " ".join(description)[:15]
 
-def process_blog(user_id : str):
+def process_blog(user_id : str, queue:queue.Queue):
     '''Processes the blog for the user'''
 
     conv = get_conversation(user_id)
@@ -227,16 +227,17 @@ def process_blog(user_id : str):
     save_conversation(user_id, conv)
 
 
-    fifo = make_filename("./","fifo")
-    if not os.path.exists(fifo):
-        os.mkfifo(fifo)
-    f = open(fifo, "w")
+    #fifo = make_filename("./","fifo")
+    #if not os.path.exists(fifo):
+    #    os.mkfifo(fifo)
+    #f = open(fifo, "w")
+#
+    #
+    #f.write(f"preview,{user_id}\n")
+    #f.flush()
+    queue.put(("preview",user_id))
 
-    
-    f.write(f"preview,{user_id}\n")
-    f.flush()
-
-def publish_blog(user_id : str):
+def publish_blog(user_id : str, queue:queue.Queue):
     '''Publishes the blog for the user'''
 
     conv = get_conversation(user_id)
@@ -244,14 +245,15 @@ def publish_blog(user_id : str):
     save_conversation(user_id, conv)
 
 
-    fifo = make_filename("./","fifo")
-    if not os.path.exists(fifo):
-        os.mkfifo(fifo)
-    f = open(fifo, "w")
+    #fifo = make_filename("./","fifo")
+    #if not os.path.exists(fifo):
+    #    os.mkfifo(fifo)
+    #f = open(fifo, "w")
 
     
-    f.write(f"publish,{user_id}\n")
-    f.flush()
+    #f.write(f"publish,{user_id}\n")
+    #f.flush()
+    queue.put(("publish",user_id))
 
 def get_contents(user_id:str):
     '''Gets the preview text for the user'''

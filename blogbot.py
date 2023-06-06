@@ -2,13 +2,19 @@ import telebot
 import blogbot_utils as bu
 import uuid
 import os.path
-
+import queue
+import blogprocessor as bp
 import json
 
 
 with open("config.json") as f:
     config = json.load(f)
 bot = telebot.TeleBot(config['telegram_bot'])
+
+work_queue = queue.Queue()
+worker = bp.BlogProcessorWorker(work_queue, config)
+worker.daemon = True
+worker.start()
 
 FOLDER = "./temp_img/"
 
@@ -221,7 +227,7 @@ def process_blog(message):
 
         if message.text.strip().lower() == 'yes':
             bot.reply_to(message, "Starting, this may take a while")
-            bu.process_blog(message.from_user.id)
+            bu.process_blog(message.from_user.id, work_queue)
         else:
             bot.reply_to(message, "ok")
 
@@ -247,8 +253,9 @@ def publish_blog(message):
 
         if message.text.strip().lower() == 'yes':
             bot.reply_to(message, "Publishing, this may take a while")
-            bu.publish_blog(message.from_user.id)
+            bu.publish_blog(message.from_user.id, work_queue)
         else:
+
             bot.reply_to(message, "ok")
 
 
