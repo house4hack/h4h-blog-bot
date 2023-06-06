@@ -125,7 +125,7 @@ class BlogProcessorWorker(threading.Thread):
         token = base64.b64encode(credentials.encode())
 
         for m in conversation['messages']:
-            if m['kind']=='media':
+            if m['kind']=='media' and m.get('uploaded_href',None) is None:
                 toUploadImagePath = task_fn+"/"+m['filename']
                 mediaImageBytes = open(toUploadImagePath, 'rb').read()
 
@@ -149,9 +149,12 @@ class BlogProcessorWorker(threading.Thread):
 
                 m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
 
-        
+        bu.save_conversation(user_id, conversation)
         contents = conversation['contents']
-        title = conversation['title']
+
+        today = datetime.strftime(datetime.now(),"%Y/%m/%d")
+
+        title = today + " - " + conversation['title']
         for m in conversation['messages']:
             if m['kind'] == 'media':
                 if m.get('slug','') != '':
