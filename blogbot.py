@@ -228,7 +228,7 @@ def process_blog(message):
 
 
 @bot.message_handler(commands=['publish'])
-def plubish_blog_wizard(message):
+def publish_blog_wizard(message):
     '''Starts the blog publishing wizard'''
     if validate_user(config, message):
 

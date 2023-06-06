@@ -37,6 +37,9 @@ def make_sane_filename(org_filename, caption):
     _ , file_extension = os.path.splitext(org_filename)
     return f"{filename}{uuid.uuid4()}{file_extension}" 
 
+def get_task_fn(user_id : str):
+    '''Gets the task filename for the user'''
+    return make_filename(FOLDER, user_id)
 
 def summary_conversation_for_user(user_id:int):
     '''Returns a summary of the conversation for the user'''
@@ -229,8 +232,8 @@ def process_blog(user_id : str):
         os.mkfifo(fifo)
     f = open(fifo, "w")
 
-    fn = make_filename(FOLDER, user_id)
-    f.write("preview,"+fn + "\n")
+    
+    f.write(f"preview,{user_id}\n")
     f.flush()
 
 def publish_blog(user_id : str):
@@ -246,8 +249,8 @@ def publish_blog(user_id : str):
         os.mkfifo(fifo)
     f = open(fifo, "w")
 
-    fn = make_filename(FOLDER, user_id)
-    f.write("publish,"+fn + "\n")
+    
+    f.write(f"publish,{user_id}\n")
     f.flush()
 
 def get_contents(user_id:str):
