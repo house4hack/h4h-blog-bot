@@ -136,8 +136,8 @@ def get_status(user_id:str):
 def set_status(user_id:str, status:str):
     '''Sets the status of the conversation for the user'''
     conv = get_conversation(user_id)
-    # validate the status as either Draft, Published or Generating or Preview
-    if status not in ['Draft', 'Published', 'Generating', 'Preview']:
+    # validate the status as either Draft, Published or Submitted, or Generating or Preview
+    if status not in ['Draft', 'Published', 'Submitted','Generating', 'Preview']:
         raise Exception("Invalid status")
     conv['status'] = status
     save_conversation(user_id, conv)

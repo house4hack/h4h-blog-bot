@@ -6,3 +6,6 @@
 /make - generate contents from the promps and photos
 /preview - preview generated contents
 /publish - push the generated contents and photos to wordpress
+/stash - saves the current contents for later retrieval using /unstash
+/stashlist - list the current saved contents
+/unstash - loads stashed contents into the current working buffer

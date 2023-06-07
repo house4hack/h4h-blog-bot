@@ -1,7 +1,7 @@
-{
-  "wordpress_key" :  "",
-  "open_ai_key"   :  "",
-  "users" : [],
-  "telegram_bot" : ""
-
-}
+{"access_password": "",
+ "open_ai_key": "",
+ "telegram_bot": "",
+ "users": [],
+ "wordpress_key": "",
+ "wordpress_user": "",
+ "wordpress_v2_json": ""}

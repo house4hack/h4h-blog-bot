@@ -1,3 +1,4 @@
+import random
 import blogbot_utils as bu
 import json
 import telebot
@@ -75,7 +76,9 @@ class BlogProcessorWorker(threading.Thread):
         bu.save_conversation(user_id, conversation)
         caption_str = "\n".join([f"Photo_{c[0]} : \"{c[2]}\"" for c in caption_list])
 
-
+        # TODO: move this to a template file and load it
+        # TODO: Document README
+        # TODO: add reload command, to git pull and reload the bot
         prompt = f"""Write a blog article about: "{". ".join(text_list)}"
         I have {len(caption_list)} photos to add in the article, with the following captions:
         {caption_str}
@@ -87,10 +90,14 @@ class BlogProcessorWorker(threading.Thread):
 
         openai.api_key = self.config['open_ai_key']
 
+        with open("style.txt") as f:
+            style = f.readlines()
+        style = random.choice(style).strip()
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                    {"role": "system", "content": "You are a blog writer for a makerspace called House4Hack. The makerspace gets together Tuesday evenings at the House and these articles chronicles the activities."},
+                    {"role": "system", "content": f"You are a blog writer for a makerspace called House4Hack. The makerspace gets together Tuesday evenings at the House and these articles chronicles the activities. In the article use a {style}. "},
                     {"role": "user", "content": prompt},
                 ]
         )
