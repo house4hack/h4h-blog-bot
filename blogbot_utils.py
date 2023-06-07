@@ -235,8 +235,7 @@ def process_blog(user_id : str, queue:queue.Queue):
     '''Processes the blog for the user'''
 
     conv = get_conversation(user_id)
-    conv['description'] = make_description(conv)
-    conv['status'] = 'Submitted'
+    set_status(user_id, 'Submitted')
     save_conversation(user_id, conv)
 
 
@@ -337,10 +336,11 @@ def stash_list(user_id:str):
         text = ""
         if 'title' in conv:
             text = conv['title']
-        elif 'description' in conv:
-            text = conv['description']
-        else:
+        elif 'contents' in conv:
             text = conv['contents']
+        else:
+            text = make_description(conv)
+
         l.append(f"{i+1}. {text[:30]} ({conv['status']})")
     return "\n".join(l)
 
