@@ -113,7 +113,19 @@ def show_conversation_as_list(user_id:str):
                 reply[-1] += ':'+m['text'] 
         else:
             pass
-    return reply
+
+    if get_status(user_id) != "Draft":
+        title_item = len(reply) +1 
+        contents_item = len(reply) + 2
+
+        reply.append(f"{title_item}. Title: "+get_title(user_id))
+        reply.append(f"{contents_item}. Contents: "+get_contents(user_id)[:50]+"...")
+    else:
+        title_item = 9999
+        contents_item = 9999
+
+       
+    return reply, title_item, contents_item
 
 # add functions to get and set the status of the conversation
 def get_status(user_id:str):
@@ -131,17 +143,15 @@ def set_status(user_id:str, status:str):
     save_conversation(user_id, conv)
 
 
-# TODO: make show conversation status aware, show the title and contents if status is preview or published
-
 def show_conversation(user_id:str):
     '''Shows the conversation for the user'''
     conv = get_conversation(user_id)
-    reply = show_conversation_as_list(user_id)
+    reply, title_item, content_item = show_conversation_as_list(user_id)
 
     result = f"Status: {conv['status']}\n" + "\n".join(reply)
     if result.strip()=="":
         result = "No prompts or media yet"
-    return result
+    return result, title_item, content_item
 
 
 

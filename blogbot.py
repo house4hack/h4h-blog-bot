@@ -79,29 +79,29 @@ def summary(message):
 def show(message):
     '''Shows the conversation'''
     if validate_user(config, message):
-        reply = bu.show_conversation(message.from_user.id)
+        reply,_,_ = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, reply)
 
 @bot.message_handler(commands=['delete'])
 def delete_wizard(message):
     '''Starts the delete wizard'''
     if validate_user(config, message):
-        reply = bu.show_conversation(message.from_user.id)
+        reply, title_item, content_item   = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, reply + "\n Which item would you like to delete? [0 to cancel]")
-        bot.register_next_step_handler(message, delete_item)
+        bot.register_next_step_handler(message, delete_item, title_item, content_item)
 
 
-def delete_item(message):
+def delete_item(message, title_item, content_item):
     '''Deletes the item, called by the delete wizard'''
     if validate_user(config, message):
 
-        if message.text != '0':
+        if message.text != '0' and int(message.text) < title_item:
             success = bu.remove_item(message.from_user.id, message.text)
             if success:
                 status = "Deleted"
             else:
                 status = "Failed deleting "
-            reply = bu.show_conversation(message.from_user.id)
+            reply,_,_ = bu.show_conversation(message.from_user.id)
             bot.reply_to(message, f'{status} {message.text}\n' + reply)
         else:
             bot.reply_to(message, "Cancelled")
@@ -111,19 +111,7 @@ def edit_wizard(message):
     '''Starts the edit wizard'''
     if validate_user(config, message):
 
-        reply_list = bu.show_conversation_as_list(message.from_user.id)
-
-        if bu.get_status(message.from_user.id) != "Draft":
-            title_item = len(reply_list) +1 
-            contents_item = len(reply_list) + 2
-
-            reply_list.append(f"{title_item}. Title: "+bu.get_title(message.from_user.id))
-            reply_list.append(f"{contents_item}. Contents: "+bu.get_contents(message.from_user.id)[:50]+"...")
-        else:
-            title_item = 9999
-            contents_item = 9999
-
-        reply = "\n".join(reply_list)
+        reply, title_item, contents_item   = bu.show_conversation(message.from_user.id)
         reply += "\n"
         bot.reply_to(message, reply + "\n Which item would you like to edit? [0 to cancel]")
         bot.register_next_step_handler(message, edit_item, contents_item, title_item)
@@ -155,7 +143,7 @@ def edit_item2(message, item):
             status = "Edited"
         else:
             status = "Failed editing "
-        reply = bu.show_conversation(message.from_user.id)
+        reply,_,_ = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, f'{status} {item}\n' + reply)
 
 def edit_title(message):
@@ -213,7 +201,7 @@ def process_blog_wizard(message):
     if validate_user(config, message):
 
         status, status_message = bu.validate_conversation(message.from_user.id)
-        reply = bu.show_conversation(message.from_user.id)
+        reply,_,_ = bu.show_conversation(message.from_user.id)
         if not status:
             bot.reply_to(message, f'Nope! {status_message}\n' + reply)
         if status:
@@ -239,7 +227,7 @@ def publish_blog_wizard(message):
     if validate_user(config, message):
 
         status, status_message = bu.validate_conversation(message.from_user.id)
-        reply = bu.show_conversation(message.from_user.id)
+        reply,_,_ = bu.show_conversation(message.from_user.id)
         if not status:
             bot.reply_to(message, f'Nope! {status_message}\n' + reply)
         if status:
