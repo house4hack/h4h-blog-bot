@@ -44,7 +44,7 @@ def check_password(message):
 def send_welcome(message):
     '''Sends the help message'''
     if validate_user(config, message):
-        with open("commands.md") as f:
+        with open("templates/commands.md") as f:
             commands = f.readlines()
         bot.reply_to(message, "".join(commands))
 

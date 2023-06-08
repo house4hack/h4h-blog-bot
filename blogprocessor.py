@@ -90,7 +90,7 @@ class BlogProcessorWorker(threading.Thread):
 
         openai.api_key = self.config['open_ai_key']
 
-        with open("style.txt") as f:
+        with open("templates/style.txt") as f:
             style = f.readlines()
         style = random.choice(style).strip()
 
