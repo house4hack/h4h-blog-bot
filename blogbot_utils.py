@@ -388,6 +388,6 @@ def edit_item(user_id:str, taskno:int, text:str):
         return False
 
 
-def reload_templates():
+def reload_templates(user_id:str, queue:queue.Queue):
     '''git pull latest templates'''
-    os.system("git pull")
+    queue.put(("reload",user_id))

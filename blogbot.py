@@ -326,8 +326,7 @@ def unstash_handler(message):
 def reload_handler(message):
     '''git pull to get latest templates'''
     if validate_user(config, message):    
-        bot.reply_to(message, "Reloading templates")
-        bu.reload_templates()
+        bu.reload_templates(message.from_user.id, work_queue)
 
 
 

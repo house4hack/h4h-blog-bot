@@ -18,6 +18,7 @@ import queue
 import time
 
 from jinja2 import Environment, FileSystemLoader
+import subprocess
 
 
 
@@ -48,6 +49,9 @@ class BlogProcessorWorker(threading.Thread):
                         
                     elif tasktype == "publish":
                         self.publish_task(user_id)
+
+                    elif tasktype == "reload":
+                        self.reload(user_id)
                         
                 except Exception as e:
                     print(e)
@@ -215,7 +219,15 @@ class BlogProcessorWorker(threading.Thread):
 
         self.bot.send_message(user_id,f"Saved as draft on wordpress: {title}\n{link}")
         bu.set_status(user_id, "Published")
-        
+
+    def reload(self, user_id:str):
+        '''Reloads the templates from git'''
+        self.bot.send_message(user_id,"Reloading templates")
+
+
+        result = subprocess.run(['git', 'pull'], stdout=subprocess.PIPE)
+        reply = result.stdout.decode('utf-8')
+        self.bot.send_message(user_id,"Reloaded:"+reply)
     
 
 

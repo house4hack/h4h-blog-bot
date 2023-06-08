@@ -9,3 +9,4 @@
 /stash - saves the current contents for later retrieval using /unstash
 /stashlist - list the current saved contents
 /unstash - loads stashed contents into the current working buffer
+/reload - reload templates from github
