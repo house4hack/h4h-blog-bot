@@ -17,6 +17,8 @@ import threading
 import queue
 import time
 
+from jinja2 import Environment, FileSystemLoader
+
 
 
 
@@ -76,17 +78,11 @@ class BlogProcessorWorker(threading.Thread):
         bu.save_conversation(user_id, conversation)
         caption_str = "\n".join([f"Photo_{c[0]} : \"{c[2]}\"" for c in caption_list])
 
-        # TODO: move this to a template file and load it
-        # TODO: Document README
-        # TODO: add reload command, to git pull and reload the bot
-        prompt = f"""Write a blog article about: "{". ".join(text_list)}"
-        I have {len(caption_list)} photos to add in the article, with the following captions:
-        {caption_str}
-        
-        Indicate the location of the photo using square brackes, for example to place photo_1 write [photo_1].  Do not place photos in the middle of a sentence or paragraph, place it between paragraphs or at the end.
-        
-        Add a title for the blog post at the top.
-        """
+
+        environment = Environment(loader=FileSystemLoader("templates/"))
+        template = environment.get_template("prompt.txt")
+        text_str = ". ".join(text_list)
+        prompt = template.render(text_list=text_str, caption_count= len(caption_list), captions=caption_str)
 
         openai.api_key = self.config['open_ai_key']
 
@@ -94,10 +90,15 @@ class BlogProcessorWorker(threading.Thread):
             style = f.readlines()
         style = random.choice(style).strip()
 
+        environment = Environment(loader=FileSystemLoader("templates/"))
+        template = environment.get_template("system_prompt.txt")
+        system_prompt = template.render(style=style)
+
+
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[
-                    {"role": "system", "content": f"You are a blog writer for a makerspace called House4Hack. The makerspace gets together Tuesday evenings at the House and these articles chronicles the activities. In the article use a {style}. "},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
                 ]
         )

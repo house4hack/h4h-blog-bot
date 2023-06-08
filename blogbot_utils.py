@@ -195,11 +195,7 @@ def add_to_conversation(user_id : str , message_id, text: str , image_file = Non
     if image_file is not None:
         
         filename = make_sane_filename(image_file, text)
-        with open(image_file,"rb") as f:
-            contents = f.read()  
-
-        with open(make_filename(FOLDER, user_id, filename), "wb") as f:
-            f.write(contents)
+        shutil.move(image_file, make_filename(FOLDER, user_id, filename))
 
         conversation['messages'][-1]['filename'] = filename   
         conversation['messages'][-1]['kind'] = 'media'   
@@ -391,3 +387,7 @@ def edit_item(user_id:str, taskno:int, text:str):
     except Exception as e:
         return False
 
+
+def reload_templates():
+    '''git pull latest templates'''
+    os.system("git pull")

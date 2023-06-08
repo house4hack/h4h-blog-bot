@@ -322,7 +322,12 @@ def unstash_handler(message):
             bot.reply_to(message, "Cancelled")
         
 
-
+@bot.message_handler(commands=['reload'])
+def reload_handler(message):
+    '''git pull to get latest templates'''
+    if validate_user(config, message):    
+        bot.reply_to(message, "Reloading templates")
+        bu.reload_templates()
 
 
 
