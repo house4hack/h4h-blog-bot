@@ -46,7 +46,8 @@ def send_welcome(message):
     if validate_user(config, message):
         with open("templates/commands.md") as f:
             commands = f.readlines()
-        bot.reply_to(message, "".join(commands))
+        commands = ["/"+c.strip() for c in commands]
+        bot.reply_to(message, "\n".join(commands))
 
 
 
@@ -79,52 +80,73 @@ def summary(message):
 def show(message):
     '''Shows the conversation'''
     if validate_user(config, message):
-        reply,_,_ = bu.show_conversation(message.from_user.id)
+        reply,_ = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, reply)
 
 @bot.message_handler(commands=['delete'])
 def delete_wizard(message):
     '''Starts the delete wizard'''
     if validate_user(config, message):
-        reply, title_item, content_item   = bu.show_conversation(message.from_user.id)
+        reply, items   = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, reply + "\n Which item would you like to delete? [0 to cancel]")
-        bot.register_next_step_handler(message, delete_item, title_item, content_item)
+        bot.register_next_step_handler(message, delete_item, items)
 
 
-def delete_item(message, title_item, content_item):
+def delete_item(message, items):
     '''Deletes the item, called by the delete wizard'''
     if validate_user(config, message):
+        title_item = items['title_item']
+        contents_item = items['content_item']
+        style_item = items['style_item']
 
-        if message.text != '0' and int(message.text) < title_item:
+        
+        if message.text != '0' and int(message.text) < style_item:
             success = bu.remove_item(message.from_user.id, message.text)
-            if success:
-                status = "Deleted"
-            else:
-                status = "Failed deleting "
-            reply,_,_ = bu.show_conversation(message.from_user.id)
-            bot.reply_to(message, f'{status} {message.text}\n' + reply)
+        elif message.text == str(style_item):
+            success = bu.remove_style(message.from_user.id)
+        elif message.text == str(title_item):
+            success = bu.remove_title(message.from_user.id)
+        elif message.text == str(contents_item):
+            success = bu.remove_contents(message.from_user.id)
         else:
             bot.reply_to(message, "Cancelled")
+            return
+
+        if success:
+            status = "Deleted"
+        else:
+            status = "Failed deleting "
+        reply,_ = bu.show_conversation(message.from_user.id)
+        bot.reply_to(message, f'{status} {message.text}\n' + reply)
+
+
 
 @bot.message_handler(commands=['edit'])
 def edit_wizard(message):
     '''Starts the edit wizard'''
     if validate_user(config, message):
 
-        reply, title_item, contents_item   = bu.show_conversation(message.from_user.id)
+        reply, items   = bu.show_conversation(message.from_user.id)
+
         reply += "\n"
         bot.reply_to(message, reply + "\n Which item would you like to edit? [0 to cancel]")
-        bot.register_next_step_handler(message, edit_item, contents_item, title_item)
+        bot.register_next_step_handler(message, edit_item, items)
 
-def edit_item(message, contents_item, title_item):
+def edit_item(message, items):
     '''Edits the item, called by the edit wizard'''
     if validate_user(config, message):
+        title_item = items['title_item']
+        contents_item = items['content_item']
+        style_item = items['style_item']
+
 
         if message.text.strip() == '0':
             bot.reply_to(message, "Cancelled")
-        elif int(message.text) < title_item:
+        elif int(message.text) < style_item:
             bot.reply_to(message, "What would you like to change it to?")
             bot.register_next_step_handler(message, edit_item2, message.text)
+        elif message.text == str(style_item):
+            style_handler(message)
         elif message.text == str(title_item):
             bot.reply_to(message, "What would you like to change the title to?")
             bot.register_next_step_handler(message, edit_title)
@@ -143,7 +165,7 @@ def edit_item2(message, item):
             status = "Edited"
         else:
             status = "Failed editing "
-        reply,_,_ = bu.show_conversation(message.from_user.id)
+        reply,_ = bu.show_conversation(message.from_user.id)
         bot.reply_to(message, f'{status} {item}\n' + reply)
 
 def edit_title(message):
@@ -201,7 +223,7 @@ def process_blog_wizard(message):
     if validate_user(config, message):
 
         status, status_message = bu.validate_conversation(message.from_user.id)
-        reply,_,_ = bu.show_conversation(message.from_user.id)
+        reply,_ = bu.show_conversation(message.from_user.id)
         if not status:
             bot.reply_to(message, f'Nope! {status_message}\n' + reply)
         if status:
@@ -227,7 +249,7 @@ def publish_blog_wizard(message):
     if validate_user(config, message):
 
         status, status_message = bu.validate_conversation(message.from_user.id)
-        reply,_,_ = bu.show_conversation(message.from_user.id)
+        reply,_ = bu.show_conversation(message.from_user.id)
         if not status:
             bot.reply_to(message, f'Nope! {status_message}\n' + reply)
         if status:
@@ -328,6 +350,34 @@ def reload_handler(message):
     if validate_user(config, message):    
         bu.reload_templates(message.from_user.id, work_queue)
 
+
+@bot.message_handler(commands=['style'])
+def style_handler(message):
+    '''Starts the style wizard'''
+    if validate_user(config, message):   
+        current_style = bu.get_style(message.from_user.id) 
+        if current_style != '':
+            bot.reply_to(message, "Your current style is:"+current_style+"\n")
+        bot.reply_to(message, "Complete the sentence 'In the article use a <your text here>' (0 to cancel or 1 for random):\n" )
+        bot.register_next_step_handler(message, style_handler_2)
+
+def style_handler_2(message):
+    '''Sets the style, called by the style wizard'''
+    if validate_user(config, message):
+        if message.text.strip() == '1':
+            style = bp.get_random_style()  
+            bu.set_style(message.from_user.id, style)  
+        elif message.text.strip() == '0':
+            bot.reply_to(message, "Cancelled")
+            return
+        else:
+            style = message.text.strip()
+
+        if style != '':
+            bu.set_style(message.from_user.id,style)
+            bot.reply_to(message, "Style set:"+style)
+        else:
+            bot.reply_to(message, "Cancelled")
 
 
 @bot.message_handler(content_types=['text'])

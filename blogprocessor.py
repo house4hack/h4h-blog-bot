@@ -20,7 +20,11 @@ import time
 from jinja2 import Environment, FileSystemLoader
 import subprocess
 
-
+def get_random_style():
+    with open("templates/style.txt") as f:
+        style = f.readlines()
+    style = random.choice(style).strip()
+    return style
 
 
 class BlogProcessorWorker(threading.Thread):
@@ -90,9 +94,11 @@ class BlogProcessorWorker(threading.Thread):
 
         openai.api_key = self.config['open_ai_key']
 
-        with open("templates/style.txt") as f:
-            style = f.readlines()
-        style = random.choice(style).strip()
+        if "style" in conversation:
+            style = conversation['style']
+        else:
+            style = get_random_style()
+            bu.set_style(conversation['user_id'], style)
 
         environment = Environment(loader=FileSystemLoader("templates/"))
         template = environment.get_template("system_prompt.txt")

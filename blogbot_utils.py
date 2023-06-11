@@ -114,18 +114,27 @@ def show_conversation_as_list(user_id:str):
         else:
             pass
 
+    if 'style' in conv:
+        style_item = len(reply) + 1
+        reply.append(f"{style_item}. Style: "+conv['style'])
+    else:
+        style_item = 9997
+
     if get_status(user_id) != "Draft":
-        title_item = len(reply) +1 
+        
+        title_item = len(reply) +1
         contents_item = len(reply) + 2
+
 
         reply.append(f"{title_item}. Title: "+get_title(user_id))
         reply.append(f"{contents_item}. Contents: "+get_contents(user_id)[:50]+"...")
     else:
-        title_item = 9999
+
+        title_item = 9998
         contents_item = 9999
 
        
-    return reply, title_item, contents_item
+    return reply, {'title_item':title_item, 'content_item':contents_item, 'style_item':style_item}
 
 # add functions to get and set the status of the conversation
 def get_status(user_id:str):
@@ -146,12 +155,12 @@ def set_status(user_id:str, status:str):
 def show_conversation(user_id:str):
     '''Shows the conversation for the user'''
     conv = get_conversation(user_id)
-    reply, title_item, content_item = show_conversation_as_list(user_id)
+    reply, items = show_conversation_as_list(user_id)
 
     result = f"Status: {conv['status']}\n" + "\n".join(reply)
     if result.strip()=="":
         result = "No prompts or media yet"
-    return result, title_item, content_item
+    return result, items
 
 
 
@@ -386,8 +395,54 @@ def edit_item(user_id:str, taskno:int, text:str):
         return True
     except Exception as e:
         return False
+    
+def get_style(user_id:str):
+    '''Gets the style for the user'''
+    conv = get_conversation(user_id)
+    return conv.get('style','')
 
+def set_style(user_id:str,  style_text:str):
+    '''Sets the style for the user'''
+    try:
+        style_text = style_text.strip()
+        conv = get_conversation(user_id)
+        conv['style'] = style_text
+        save_conversation(user_id, conv)
+        return True
+    except:
+        return False
+    
 
 def reload_templates(user_id:str, queue:queue.Queue):
     '''git pull latest templates'''
     queue.put(("reload",user_id))
+
+def remove_style(user_id:str):
+    '''Removes the style for the user'''
+    conv = get_conversation(user_id)
+    if 'style' in conv:
+        del conv['style']
+        save_conversation(user_id, conv)
+        return True
+    else:
+        return False
+    
+def remove_contents(user_id:str):
+    '''Removes the contents for the user'''
+    conv = get_conversation(user_id)
+    if 'contents' in conv:
+        del conv['contents']
+        save_conversation(user_id, conv)
+        return True
+    else:
+        return False
+    
+def remove_title(user_id:str):
+    '''Removes the title for the user'''
+    conv = get_conversation(user_id)
+    if 'title' in conv:
+        del conv['title']
+        save_conversation(user_id, conv)
+        return True
+    else:
+        return False
