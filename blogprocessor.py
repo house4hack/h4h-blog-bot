@@ -120,8 +120,10 @@ class BlogProcessorWorker(threading.Thread):
         title = contents.split("\n")[0]
         contents = "\n".join(contents.split("\n")[1:])
 
-        title = title.split("Title:")[1].strip()
+        if title.startswith("Title:"):
+            title = title.split("Title:")[1].strip()
 
+        
         bu.set_status(conversation['user_id'], "Preview")
         bu.set_contents(conversation['user_id'], contents)
         bu.set_title(conversation['user_id'], title)
@@ -175,7 +177,15 @@ class BlogProcessorWorker(threading.Thread):
                     width = jj['media_details']['width'] 
                     m['tag'] = f'[video width="{width}" height="{height}" mp4="{jj["source_url"]}"][/video]'
                 else:
-                    m['uploaded_href'] = jj['media_details']['sizes']['medium']['source_url']
+                    sizes = jj['media_details']['sizes']
+                    for k in sizes:
+                        width  = sizes[k]['width']
+                        if width > 250 and width < 500:
+                            m['uploaded_href'] = sizes[k]['source_url']
+                            break
+                    if m.get('uploaded_href',None) is None:
+                        m['uploaded_href'] = jj['media_details']['sizes']['full']['source_url']
+
                     m['tag']=f"""<img src="{m['uploaded_href']}" alt="{m.get('text','')}" />"""
 
                 bu.save_conversation(user_id, conversation)
