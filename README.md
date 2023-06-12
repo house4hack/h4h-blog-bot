@@ -1,7 +1,7 @@
 H4H Blog Bot
 ===
 
-House4Hack or H4H is a makerspace in Centurion, South Africa.  This telegram bot was create to increase visibility of the House4Hack meetups on Tuesday evenings.  The idea is to take a couple of pictures, add optional captions and a short prompt and for ChatGPT to compose a reasonably true account of a project or activity during the makerspace meetup.
+House4Hack or H4H is a makerspace in Centurion, South Africa.  This telegram bot was create to increase visibility of the House4Hack meetups on Tuesday evenings.  The idea is to take a couple of pictures, add optional captions and a short prompt and for ChatGPT to compose a reasonably true account of a project or activity during the makerspace meetup
 
 Example
 ===
@@ -86,4 +86,13 @@ To add a prompt, simply send a text message to the bot.  To add a photo, send a 
 
 Use /edit or /delete to modify the current buffer.  You can optionally edit the style of the generated contents using /style.  Or update the prompt templates on github and then use /reload to update the templates locally.
 
-The /make command will generate the contents from the prompts and photos.  The /preview command will show the generated contents.  The /publish command will push the generated contents and photos to wordpress.
+The /make command will generate the contents from the prompts and photos.  The /preview command will show the generated contents.  The /publish command will push the generated contents and photos to wordpress as **draft**.
+
+
+Known limitations
+===
+
+Due to the nature of the short prompts and limited context provided, ChatGPT may produce details that are entirely untrue or misleading.  Editing the preview and reading the generated article before publishing is highly recommended!
+
+It is not particularly robust and sometimes fails to follow the instructions about generating the title or placing the photos.  But for this use-case still useful - ymmv.
+
