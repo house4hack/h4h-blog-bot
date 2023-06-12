@@ -13,6 +13,7 @@ For example, the following prompt was given to the bot:
 ![Example Prompt](https://raw.githubusercontent.com/house4hack/h4h-blog-bot/main/docs/prompt.png)
 
 And the following photos:
+
 ![Example Photo 1](https://raw.githubusercontent.com/house4hack/h4h-blog-bot/main/docs/altimeter.png)
 
 
