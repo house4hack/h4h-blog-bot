@@ -3,6 +3,20 @@ H4H Blog Bot
 
 [House4Hack](https://www.house4hack.co.za/) or H4H is a makerspace in Centurion, South Africa.  This telegram bot was create to increase visibility of the House4Hack meetups on Tuesday evenings.  The idea is to take a couple of pictures, add optional captions and a short prompt and for ChatGPT to compose a reasonably true account of a project or activity during the makerspace meetup
 
+Details
+===
+* Uses [OpenAI ChatGPT 3.5](https://platform.openai.com/docs/guides/gpt/chat-completions-api) to generate the contents
+* No database required - all data is stored in the file-system
+* Uses Jinja2 templates for the prompts and system prompts that can be configured externally and reloaded without restarting the bot
+* Supports user specified or random styles (inserted in the system_prompt) to give some variety to the generated contents
+* Supports stashing and unstashing of contents to allow for multiple blog posts to be generated in parallel
+* Supports editing of prompts and captions
+* Supports editing of the generated contents before publishing
+* Supports previewing of the generated contents before publishing
+* Supports publishing of the generated contents to Wordpress as a draft
+* Supports photos and video content (mp4 tested and limited to < 20MB)
+
+
 Example
 ===
 
