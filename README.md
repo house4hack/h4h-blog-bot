@@ -68,6 +68,7 @@ Before using the bot, a config.json file needs to be created in the root folder.
     * users: List of telegram user IDs that are allowed to use the bot (will be populated automatically when users use the bot for the first time)
     * wordpress_key: Wordpress API key
     * wordpress_user: Wordpress user name that will publish the blog post
+    * wordpress_category: Wordpress category ID that will be used for the blog post
     * wordpress_v2_json: Wordpress JSON API URL - url for the wordpress site with /wp-json/wp/v2/ appended
 
 To get a Wordpress API key - follow [these instructions](https://osomcode.com/create-authentication-wordpress-rest-api-without-plugins/)
