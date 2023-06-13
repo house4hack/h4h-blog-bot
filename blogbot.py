@@ -45,9 +45,8 @@ def send_welcome(message):
     '''Sends the help message'''
     if validate_user(config, message):
         with open("templates/commands.md") as f:
-            commands = f.readlines()
-        commands = ["/"+c.strip() for c in commands]
-        bot.reply_to(message, "\n".join(commands))
+            commands = f.read()
+        bot.reply_to(message, commands, parse_mode="Markdown")
 
 
 
