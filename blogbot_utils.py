@@ -385,12 +385,19 @@ def delete_stash(user_id:str, taskno:int):
     shutil.rmtree(str(unstash_folder))
 
 
-def edit_item(user_id:str, taskno:int, text:str):
+def get_item(user_id:str, taskno:int):
+    '''Gets the item for the user'''
+    taskno = int(taskno)
+    conv = get_conversation(user_id)
+    return conv['messages'][taskno-1]['text']
+
+def edit_item(user_id:str, taskno:int, text:str, message_id):
     '''Edits the item for the user'''
     try:
         taskno = int(taskno)
         conv = get_conversation(user_id)
         conv['messages'][taskno-1]['text'] = text
+        conv['messages'][taskno-1]['id'] = message_id
         save_conversation(user_id, conv)
         return True
     except Exception as e:

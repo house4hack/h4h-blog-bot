@@ -60,11 +60,21 @@ def show_preview(message):
 
 
 @bot.message_handler(commands=['clear'])
+def clear_wizard(message):
+    '''Starts the clear wizard'''
+    if validate_user(config, message):
+        bot.reply_to(message, "Are you sure you want to clear the conversation? [yes / no]")
+        bot.register_next_step_handler(message, clear_conversation)
+
+
 def clear_conversation(message):
     '''Clears the conversation'''
     if validate_user(config, message):
-        bu.clear_conversation(message.from_user.id)
-        bot.reply_to(message, "Cleared")
+        if message.text.lower() == 'yes':         
+            bu.clear_conversation(message.from_user.id)
+            bot.reply_to(message, "Cleared")
+        else:
+            bot.reply_to(message, "Cancelled")
 
 @bot.message_handler(commands=['summary'])
 def summary(message):
@@ -143,6 +153,7 @@ def edit_item(message, items):
             bot.reply_to(message, "Cancelled")
         elif int(message.text) < style_item:
             bot.reply_to(message, "What would you like to change it to?")
+            bot.send_message(message.from_user.id, bu.get_item(message.from_user.id, message.text))
             bot.register_next_step_handler(message, edit_item2, message.text)
         elif message.text == str(style_item):
             style_handler(message)
@@ -159,7 +170,7 @@ def edit_item2(message, item):
     '''Edits the item, called by the edit wizard'''
     if validate_user(config, message):
 
-        success = bu.edit_item(message.from_user.id, item, message.text)
+        success = bu.edit_item(message.from_user.id, item, message.text, message.message_id)
         if success:
             status = "Edited"
         else:
