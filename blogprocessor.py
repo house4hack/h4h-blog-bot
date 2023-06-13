@@ -221,7 +221,7 @@ class BlogProcessorWorker(threading.Thread):
         'title'    : title,
         'status'   : 'draft', 
         'content'  : contents,
-        'categories': 38, # category ID
+        'categories': self.config['wordpress_category'], # category ID
         'date'   : datetime.now().isoformat().split('.')[0]
         }
         responce = requests.post(self.config["wordpress_v2_json"]+"/posts" , headers=header, json=post)
