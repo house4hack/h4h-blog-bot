@@ -389,7 +389,7 @@ def get_item(user_id:str, taskno:int):
     '''Gets the item for the user'''
     taskno = int(taskno)
     conv = get_conversation(user_id)
-    return conv['messages'][taskno-1]['text']
+    return conv['messages'][taskno-1].get('text','')
 
 def edit_item(user_id:str, taskno:int, text:str, message_id):
     '''Edits the item for the user'''

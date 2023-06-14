@@ -153,7 +153,11 @@ def edit_item(message, items):
             bot.reply_to(message, "Cancelled")
         elif int(message.text) < style_item:
             bot.reply_to(message, "What would you like to change it to?")
-            bot.send_message(message.from_user.id, bu.get_item(message.from_user.id, message.text))
+            current_text = bu.get_item(message.from_user.id, message.text)
+            if current_text != None:
+                if current_text.strip() != '':
+                    bot.send_message(message.from_user.id, current_text)
+                bot.send_message(message.from_user.id, current_text)
             bot.register_next_step_handler(message, edit_item2, message.text)
         elif message.text == str(style_item):
             style_handler(message)
