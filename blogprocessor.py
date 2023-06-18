@@ -18,7 +18,12 @@ import queue
 import time
 
 from jinja2 import Environment, FileSystemLoader
+from bs4 import BeautifulSoup
+from bs4.element import Comment
+
+
 import subprocess
+
 
 def get_random_style():
     with open("templates/style.txt") as f:
@@ -26,6 +31,21 @@ def get_random_style():
     style = random.choice(style).strip()
     return style
 
+
+
+def tag_visible(element):
+    if element.parent.name in ['style', 'script', 'head', 'title', 'meta', '[document]']:
+        return False
+    if isinstance(element, Comment):
+        return False
+    return True
+
+
+def text_from_html(body):
+    soup = BeautifulSoup(body, 'html.parser')
+    texts = soup.findAll(string=True)
+    visible_texts = filter(tag_visible, texts)  
+    return u" ".join(t.strip() for t in visible_texts)
 
 class BlogProcessorWorker(threading.Thread):
     def __init__(self, q:queue.Queue, config:dict, *args, **kwargs):
@@ -62,6 +82,35 @@ class BlogProcessorWorker(threading.Thread):
                     traceback.print_exc()
                     self.bot.send_message(user_id, "Something went wrong, please try again later:\n {}".format(e))
 
+    def get_prev_posts(self, count:int):
+        password = self.config['wordpress_key']
+        url = self.config['wordpress_url']
+        if url.endswith("/"):
+            url = url[:-1]
+        category = self.config['wordpress_category']
+        href = f"{url}/wp-json/wp/v2/posts?categories={category}"
+        user = self.config['wordpress_user']
+        credentials = user + ':' + password
+        token = base64.b64encode(credentials.encode())
+
+
+        header = {'Authorization': 'Basic ' + token.decode('utf-8')}
+        responce = requests.get(href ,params={'categories':category}, headers=header)
+        if responce.status_code != 200:
+            raise Exception(f"Error getting posts: {responce.status_code} {responce.text}")
+        jj = responce.json()
+        jj = jj[:count]
+        result = []
+        for post in jj:
+            text = text_from_html(post['content']['rendered'] )
+            title = text_from_html("<html><body><p>"+post['title']['rendered']+ "</p></body></html>")
+            #print(title, post['title']['rendered'])
+            result.append({"title":title, "contents":text, "date":post['date'][:10]})
+        return result
+
+
+
+
 
     def process_task(self, user_id : str):
         '''Processes the task'''
@@ -90,7 +139,13 @@ class BlogProcessorWorker(threading.Thread):
         environment = Environment(loader=FileSystemLoader("templates/"))
         template = environment.get_template("prompt.txt")
         text_str = ". ".join(text_list)
-        prompt = template.render(text_list=text_str, caption_count= len(caption_list), captions=caption_str)
+        
+        prev_posts = self.get_prev_posts(10)
+        prev_post_count = len(prev_posts)
+        
+        today = datetime.today().strftime('%Y-%m-%d')
+        prompt = template.render(text_list=text_str, caption_count= len(caption_list), captions=caption_str, prev_post_count=prev_post_count, prev_posts=prev_posts, date=today)
+        #print(prompt)
 
         openai.api_key = self.config['open_ai_key']
 

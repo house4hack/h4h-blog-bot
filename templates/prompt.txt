@@ -1,12 +1,33 @@
 {# templates/prompt.txt #}
-{# Available variables: text_list, caption_count, captions #}
+{# Available variables: text_list, caption_count, captions, prev_post_count, prev_posts, date #}
 
-Write a blog article about: {{ text_list }}
+I want you to write a blog article about a meetup at House4Hack.
+
+{% if prev_post_count > 0 %}
+Today's date is {{ date }}.
+
+Below is the date, title and contents of previous blog posts from {{prev_post_count}} meetups at House4Hack. 
+If a post about a previous meetup is relevant, you can refer to it in your post to create a better story, otherwise just ignore it.  
+When referring to a meetup date, use language like "last month's meetup" or "the meetup in January".  
+Do not repeat contents from previous posts, but rather use it create continuity between older posts and this post.
+{% for post in prev_posts %}
+Date: {{ post.date }}
+Title:{{ post.title }}
+Contents: {{ post.contents }}
+
+{% endfor %}
+
+{% endif %}
+
+
+In this article, I want you to write about: {{ text_list }}
 {% if caption_count > 0 %}
 I have {{ caption_count }} photos to add in the article, with the following captions:
 {{ captions }}
 
-Indicate the location of the photo using square brackes, for example to place photo_1 write [photo_1].  Do not place photos in the middle of a sentence or paragraph, place it between paragraphs or at the end.  Do not place the caption, only the location of the photo using square brackets.
+Indicate the location of the photo using square brackes, for example to place photo_1 write [photo_1]. 
+Do not place photos in the middle of a sentence or paragraph, place it between paragraphs or at the end.  
+Do not place the caption, only the location of the photo using square brackets.
 {% endif %}
 
 Add a title for the blog post at the top.
