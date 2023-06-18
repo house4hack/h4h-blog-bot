@@ -58,7 +58,7 @@ Before using the bot, a config.json file needs to be created in the root folder.
  "wordpress_key": "",
  "wordpress_user": "",
  "wordpress_category":1,
- "wordpress_v2_json": ""}
+ "wordpress_url": ""}
  ```
 
  Keys as follows:
