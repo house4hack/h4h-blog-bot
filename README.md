@@ -70,7 +70,7 @@ Before using the bot, a config.json file needs to be created in the root folder.
     * wordpress_key: Wordpress API key
     * wordpress_user: Wordpress user name that will publish the blog post
     * wordpress_category: Wordpress category ID that will be used for the blog post
-    * wordpress_v2_json: Wordpress JSON API URL - url for the wordpress site with /wp-json/wp/v2/ appended
+    * wordpress_url: Wordpress URL - url for the wordpress site (e.g. https://www.house4hack.co.za)
 
 To get a Wordpress API key - follow [these instructions](https://osomcode.com/create-authentication-wordpress-rest-api-without-plugins/)
 

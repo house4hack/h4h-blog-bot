@@ -224,14 +224,19 @@ class BlogProcessorWorker(threading.Thread):
         'categories': self.config['wordpress_category'], # category ID
         'date'   : datetime.now().isoformat().split('.')[0]
         }
-        responce = requests.post(self.config["wordpress_v2_json"]+"/posts" , headers=header, json=post)
+
+        url = self.config['wordpress_url']
+        if url.endswith("/"):
+            url = url[:-1]
+        responce = requests.post(url+"/wp-json/wp/v2/posts" , headers=header, json=post)
         if responce.status_code != 201 and responce.status_code != 200:
             raise Exception("Error publishing post: {}".format(responce.reason))
         
         jj = responce.json()
         #link = jj['link']
         id = jj['id']
-        link = f"https://www.house4hack.co.za/wp-admin/post.php?post={id}&action=edit"
+        
+        link = f"{url}/wp-admin/post.php?post={id}&action=edit"
 
         self.bot.send_message(user_id,f"Saved as draft on wordpress: {title}\n{link}")
         bu.set_status(user_id, "Published")
