@@ -214,9 +214,13 @@ class BlogProcessorWorker(threading.Thread):
                 "Accept": "application/json",
                 'Content-Disposition': "attachment; filename=%s" % uploadImageFilename,
                 }
+                url = self.config['wordpress_url']
+                if url.endswith("/"):
+                    url = url[:-1]
+                url = url+"/wp-json/wp/v2/media"
 
                 resp = requests.post(
-                self.config["wordpress_v2_json"]+"/media",
+                url,
                 headers=curHeaders,
                 data=mediaImageBytes,
                 )
