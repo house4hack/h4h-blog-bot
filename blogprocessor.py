@@ -140,7 +140,7 @@ class BlogProcessorWorker(threading.Thread):
         template = environment.get_template("prompt.txt")
         text_str = ". ".join(text_list)
         
-        prev_posts = self.get_prev_posts(10)
+        prev_posts = self.get_prev_posts(5)
         prev_post_count = len(prev_posts)
         
         today = datetime.today().strftime('%Y-%m-%d')
