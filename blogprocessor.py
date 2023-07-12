@@ -268,6 +268,7 @@ class BlogProcessorWorker(threading.Thread):
                     href = m['uploaded_href']
                     contents += f'<figure class="wp-block-image size-large"><img src="{href}" alt=""/></figure>\n<br/>'
 
+        contents += "\n\n<a href=\"https://www.house4hack.co.za/who-is-blogbot\">Who is Blogbot?</a>"
 
 
         user = self.config['wordpress_user']
