@@ -161,7 +161,7 @@ class BlogProcessorWorker(threading.Thread):
 
 
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt},
